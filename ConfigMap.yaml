@@ -37,8 +37,8 @@ data:
         Name          cloudwatch
         Match         *
         endpoint      https://logs.<region>.amazonaws.com
-        region        <region>
-        log_group_name <log-groupName>
+        region        ap-southeast-2
+        log_group_name my-log-group
         log_stream_name {hostname}-{container_id}-{date +%s}
         auto_create_group true
 
