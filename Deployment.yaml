@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-flb-sidecar
+  namespace: default
+  labels:
+    app.kubernetes.io/name: default
+    app.kubernetes.io/instance: flb-sidecar
+    app.kubernetes.io/version: "1.0"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: default
+      app.kubernetes.io/instance: flb-sidecar
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: default
+        app.kubernetes.io/instance: flb-sidecar
+    spec:
+      serviceAccountName: cloudwatch-logs
+      containers:
+        - name: default
+          image: "nginx:latest"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {}
+          volumeMounts:
+            - name: log-volume
+              mountPath: var/log/nginx
+        - name: default-fluentbit
+          image: amazon/aws-for-fluent-bit:1.2.2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: metrics
+              containerPort: 2020
+              protocol: TCP
+          volumeMounts:
+            - name: config-volume
+              mountPath: /fluent-bit/etc/
+            - name: log-volume
+              mountPath: var/log/nginx
+      volumes:
+        - name: log-volume
+          emptyDir: {}
+        - name: config-volume
+          configMap:
+            name: nginx-flb-sidecar
+
